@@ -3,6 +3,7 @@ type DisplayIMGProps = {
 };
 
 export default function DisplayIMG({ previewURL }: DisplayIMGProps) {
+
   if (!previewURL) return;
   return (
     <img
@@ -11,4 +12,5 @@ export default function DisplayIMG({ previewURL }: DisplayIMGProps) {
       className="mx-auto h-110 w-80 rounded shadow"
     />
   );
+  
 }

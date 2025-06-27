@@ -1,9 +1,25 @@
 import React, { useEffect, useState } from "react";
 
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+
+type OCRFieldResult = {
+  page: number;
+  rawtext: string;
+  fields: {
+    tracking_numbers?: string[];
+    phone_matches?: string[];
+    name_matches?: string[];
+    address_matches?: string[];
+    zipcode_matches?: string[];
+  };
+};
+
 export default function useUploadFile() {
   const [previewURL, setPreviewURL] = useState<string | null>(null);
   const [fileName, setFileName] = useState("");
   const [ocrResult, setOcrResult] = useState<string>("");
+  const [loading, setLoading] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -30,7 +46,7 @@ export default function useUploadFile() {
   }, [previewURL]);
 
   const uploadFile = async () => {
-    if (!previewURL) return;
+    if (!previewURL) return("Add a File");
 
     const fileInput = document.querySelector(
       'input[type="file"]',
@@ -40,18 +56,117 @@ export default function useUploadFile() {
     const file = fileInput.files[0];
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("task_type", "default");
 
     try {
+      setLoading(true);
       const response = await fetch("http://localhost:8000/ocr", {
         method: "POST",
         body: formData,
       });
       const data = await response.json();
-      setOcrResult(data.result);
+
+      console.log(data);
+
+      if (data.page_results && Array.isArray(data.page_results)) {
+        const formatted = (data.page_results as OCRFieldResult[]).map(
+          (pageResult) => {
+            const { page, fields } = pageResult;
+
+            const getValue = (values?: string[], label?: string) => {
+              if (values && values.length > 0) {
+                return values.map((v) => `${label}: ${v}`).join("\n");
+              } else {
+                return `${label}: ไม่ทราบ`;
+              }
+            };
+
+            return (
+              `หน้าที่ ${page}\n` +
+              getValue(fields.tracking_numbers, "หมายเลขพัสดุ") +
+              "\n" +
+              getValue(fields.name_matches, "ชื่อผู้รับ") +
+              "\n" +
+              getValue(fields.address_matches, "ที่อยู่ผู้รับ") +
+              "\n" +
+              getValue(fields.phone_matches, "เบอร์โทร") +
+              "\n" +
+              getValue(fields.zipcode_matches, "รหัสไปรษณีย์") +
+              "\n"
+            );
+          },
+        );
+
+        setLoading(false);
+        setOcrResult(formatted.join("\n"));
+      } else {
+        setLoading(false);
+        setOcrResult("ไม่พบข้อมูลจาก OCR");
+      }
+
+      // if (data.fields) {
+      //   setOcrResult(data.fields);
+      // } else if (data.result) {
+      //   setOcrResult(data.result);
+      // } else {
+      //   setOcrResult("ไม่พบข้อมูลจาก OCR");
+      // }
     } catch (err) {
+      setLoading(false);
       console.error(err);
       alert("เกิดข้อผิดพลาดในการส่งไฟล์");
     }
+  };
+
+  const exportToExcel = () => {
+    if (!ocrResult) return;
+
+    // แยกเป็น array โดยแต่ละ element เป็น block ของ 1 หน้า
+    const pages = ocrResult.split(/\n(?=หน้าที่ \d+)/g);
+
+    // สร้าง array เก็บข้อมูล rows
+    const data: { หน้า: string; หัวข้อ: string; ข้อมูล: string }[] = [];
+
+    pages.forEach((pageBlock) => {
+      // แยกบรรทัดทั้งหมดใน block
+      const lines = pageBlock
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+      // บรรทัดแรกควรเป็น "หน้าที่ N"
+      const pageLine = lines[0];
+      const pageNum = pageLine.replace("หน้าที่ ", "");
+
+      // ส่วนที่เหลือเป็นหัวข้อและข้อมูล
+      // format: "หัวข้อ: ข้อมูล"
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i];
+        const [header, ...rest] = line.split(":");
+        const value = rest.join(":").trim();
+
+        data.push({
+          หน้า: pageNum,
+          หัวข้อ: header || "",
+          ข้อมูล: value || "",
+        });
+      }
+    });
+
+    // สร้าง worksheet
+    const worksheet = XLSX.utils.json_to_sheet(data);
+
+    // สร้าง workbook และ append worksheet
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "OCR Result");
+
+    // สร้างไฟล์ Excel buffer และ save
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+    const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(blob, "ocr_result.xlsx");
   };
 
   return {
@@ -63,5 +178,8 @@ export default function useUploadFile() {
     setOcrResult,
     handleFileChange,
     uploadFile,
+    exportToExcel,
+    loading,
+    setLoading,
   };
 }

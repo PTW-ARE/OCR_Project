@@ -1,0 +1,9 @@
+fastapi==0.95.2
+uvicorn[standard]==0.22.0
+python-multipart==0.0.6
+typhoon-ocr==0.3.6
+pdf2image==1.16.3
+python-dotenv==1.0.0
+Pillow==9.5.0
+poppler(pdf2image)
+.env(OPENAI_API_KEY)

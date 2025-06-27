@@ -3,6 +3,7 @@ type DisplayPDFProps = {
 };
 
 export default function DisplayPDF({ previewURL }: DisplayPDFProps) {
+
   if (!previewURL) return;
   return (
     <embed
@@ -11,4 +12,5 @@ export default function DisplayPDF({ previewURL }: DisplayPDFProps) {
       className="h-[450px] w-full rounded shadow"
     />
   );
+  
 }

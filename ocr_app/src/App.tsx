@@ -3,8 +3,15 @@ import DisplayPDF from "./components/DisplayPDF";
 import useUploadFile from "./hook/useUploadFile";
 
 function App() {
-  const { previewURL, fileName, ocrResult, handleFileChange, uploadFile } =
-    useUploadFile();
+  const {
+    previewURL,
+    fileName,
+    ocrResult,
+    handleFileChange,
+    uploadFile,
+    exportToExcel,
+    loading,
+  } = useUploadFile();
 
   const renderPreview = () => {
     if (!previewURL) return null;
@@ -16,34 +23,61 @@ function App() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-black">
-      <div className="flex min-h-[80dvh] min-w-[60dvh] flex-col justify-between overflow-y-auto rounded-xl border border-gray-300 bg-white p-5 text-center shadow-xl">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-r from-indigo-900 via-purple-900 to-pink-700 p-8">
+      <div className="flex min-h-[80vh] min-w-[60vh] flex-col justify-between overflow-y-auto rounded-xl border border-gray-700 bg-gray-900 p-6 text-center shadow-2xl">
         {/* ส่วนเนื้อหา */}
         <div>
-          <h2 className="mb-4 text-2xl font-semibold">อัปโหลดไฟล์</h2>
+          <h2 className="mb-6 text-3xl font-extrabold text-indigo-400">
+            Upload File
+          </h2>
           <input
             type="file"
             accept="image/*,application/pdf"
             onChange={handleFileChange}
-            className="mb-4 w-full max-w-70 rounded border border-gray-300 bg-gray-200 p-2 text-center transition duration-300 hover:bg-gray-500"
+            className="mb-6 w-full max-w-72 rounded border border-gray-700 bg-gray-800 p-3 text-center text-gray-300 transition duration-300 hover:bg-gray-700 disabled:cursor-not-allowed disabled:bg-gray-700"
+            disabled={loading}
           />
-          <p className="my-2 text-sm text-black">{fileName}</p>
+          <p className="my-3 text-sm font-medium text-gray-300">{fileName}</p>
 
           {renderPreview()}
+        </div>
+
+        <button
+          onClick={uploadFile}
+          disabled={!previewURL || loading}
+          className={`mx-auto rounded-lg px-8 py-3 text-xl font-semibold text-white transition-shadow duration-300 ${
+            loading
+              ? "cursor-not-allowed bg-gray-600 shadow-none"
+              : "bg-gradient-to-r from-purple-700 via-indigo-700 to-blue-800 hover:from-purple-800 hover:via-indigo-800 hover:to-blue-900 hover:shadow-lg"
+          }`}
+        >
+          {loading ? "Loading..." : "RUN"}
+        </button>
+      </div>
+
+      <div className="ml-12 flex min-h-[80vh] w-[800px] flex-col justify-between overflow-y-auto rounded-xl border border-gray-700 bg-gray-900 p-6 text-center shadow-2xl">
+        <div>
+          <h2 className="mb-6 text-3xl font-extrabold text-indigo-400">
+            Result
+          </h2>
 
           {ocrResult && (
-            <div className="mt-4 max-h-60 overflow-y-auto rounded border border-gray-300 bg-gray-100 p-4 text-left whitespace-pre-wrap text-black">
-              <h3 className="mb-2 text-lg font-semibold">ผลลัพธ์ OCR</h3>
+            <div className="mt-4 max-h-[40rem] overflow-y-auto rounded border border-gray-700 bg-gray-800 p-5 text-left whitespace-pre-wrap text-gray-300 shadow-inner">
               <p>{ocrResult}</p>
             </div>
           )}
         </div>
 
         <button
-          onClick={uploadFile}
-          className="rounded bg-green-600 px-6 py-2 text-xl text-white transition hover:bg-green-700"
+          onClick={exportToExcel}
+          disabled={!ocrResult || loading}
+          className={`mx-auto rounded-lg px-8 py-3 text-xl font-semibold text-white transition-shadow duration-300 ${
+            !ocrResult || loading
+              ? "cursor-not-allowed bg-gray-600 shadow-none"
+              : "bg-gradient-to-r from-green-600 via-green-700 to-green-800 hover:from-green-700 hover:via-green-800 hover:to-green-900 hover:shadow-lg"
+          }`}
         >
-          ส่งไป OCR
+          Export to Excel
         </button>
       </div>
     </div>
