@@ -123,7 +123,7 @@ async def ocr_endpoint(
                 os.remove(img_tmp_path)
 
         else:
-            # Single image
+            
             page_text = ocr_document(
                 pdf_or_image_path=temp_path,
                 task_type=task_type,

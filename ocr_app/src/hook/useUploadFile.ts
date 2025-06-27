@@ -133,25 +133,19 @@ export default function useUploadFile() {
   const exportToExcel = () => {
     if (!ocrResult) return;
 
-    // แยกเป็น array โดยแต่ละ element เป็น block ของ 1 หน้า
     const pages = ocrResult.split(/\n(?=หน้าที่ \d+)/g);
 
-    // สร้าง array เก็บข้อมูล rows
     const data: { หน้า: string; หัวข้อ: string; ข้อมูล: string }[] = [];
 
     pages.forEach((pageBlock) => {
-      // แยกบรรทัดทั้งหมดใน block
       const lines = pageBlock
         .split("\n")
         .map((line) => line.trim())
         .filter(Boolean);
 
-      // บรรทัดแรกควรเป็น "หน้าที่ N"
       const pageLine = lines[0];
       const pageNum = pageLine.replace("หน้าที่ ", "");
 
-      // ส่วนที่เหลือเป็นหัวข้อและข้อมูล
-      // format: "หัวข้อ: ข้อมูล"
       for (let i = 1; i < lines.length; i++) {
         const line = lines[i];
         const [header, ...rest] = line.split(":");
@@ -165,14 +159,12 @@ export default function useUploadFile() {
       }
     });
 
-    // สร้าง worksheet
+
     const worksheet = XLSX.utils.json_to_sheet(data);
 
-    // สร้าง workbook และ append worksheet
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "OCR Result");
 
-    // สร้างไฟล์ Excel buffer และ save
     const excelBuffer = XLSX.write(workbook, {
       bookType: "xlsx",
       type: "array",
