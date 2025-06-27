@@ -7,6 +7,9 @@ function App() {
     previewURL,
     fileName,
     ocrResult,
+    rawTextResult,
+    showRawText,
+    toggleRawText,
     handleFileChange,
     uploadFile,
     exportToExcel,
@@ -24,7 +27,8 @@ function App() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-r from-indigo-900 via-purple-900 to-pink-700 p-8">
-      <div className="flex min-h-[80vh] min-w-[60vh] flex-col justify-between overflow-y-auto rounded-xl border border-gray-700 bg-gray-900 p-6 text-center shadow-2xl">
+      {/* กล่องซ้าย (Upload) */}
+      <div className="flex max-h-[80vh] min-h-[80vh] min-w-[60vh] flex-col justify-between overflow-y-auto rounded-xl border border-gray-700 bg-gray-900 p-6 text-center shadow-2xl">
         {/* ส่วนเนื้อหา */}
         <div>
           <h2 className="mb-6 text-3xl font-extrabold text-indigo-400">
@@ -55,19 +59,40 @@ function App() {
         </button>
       </div>
 
-      <div className="ml-12 flex min-h-[80vh] w-[800px] flex-col justify-between overflow-y-auto rounded-xl border border-gray-700 bg-gray-900 p-6 text-center shadow-2xl">
-        <div>
-          <h2 className="mb-6 text-3xl font-extrabold text-indigo-400">
-            Result
-          </h2>
+      {/* กล่องขวา (Result) */}
+      <div className="ml-12 flex max-h-[80vh] min-h-[80vh] w-[800px] flex-col overflow-hidden rounded-xl border border-gray-700 bg-gray-900 p-6 text-center shadow-2xl">
+        {/* ส่วนบน: หัวข้อ + ปุ่ม Show Raw Text */}
+        <div className="relative mb-6 flex items-center justify-center">
+          {/* หัวข้อ Result อยู่ตรงกลาง */}
+          <h2 className="text-3xl font-extrabold text-indigo-400">Result</h2>
 
-          {ocrResult && (
-            <div className="mt-4 max-h-[40rem] overflow-y-auto rounded border border-gray-700 bg-gray-800 p-5 text-left whitespace-pre-wrap text-gray-300 shadow-inner">
-              <p>{ocrResult}</p>
-            </div>
+          {/* ปุ่ม Show Raw Text อยู่มุมขวาบน */}
+          {(ocrResult || rawTextResult) && (
+            <button
+              onClick={toggleRawText}
+              disabled={loading}
+              className={`absolute top-0 right-0 rounded-md border border-indigo-600 bg-indigo-800 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 ${
+                loading
+                  ? "cursor-not-allowed opacity-50 hover:bg-indigo-800"
+                  : ""
+              }`}
+            >
+              {showRawText ? "Show Formatted" : "Show Raw Text"}
+            </button>
           )}
         </div>
 
+        {/* กล่องผลลัพธ์ OCR กินพื้นที่ที่เหลือ และเลื่อนภายใน */}
+        {ocrResult || rawTextResult ? (
+          <div className="mb-4 flex-grow overflow-y-auto rounded border border-gray-700 bg-gray-800 p-5 text-left whitespace-pre-wrap text-gray-300 shadow-inner">
+            <p className="mt-0">{showRawText ? rawTextResult : ocrResult}</p>
+          </div>
+        ) : (
+          // ถ้ายังไม่มีผลลัพธ์ แสดงกล่องเปล่าหรือ placeholder (optional)
+          <div className="mb-4 flex-grow rounded border border-gray-700 bg-gray-800 p-5 text-left text-gray-500" />
+        )}
+
+        {/* ปุ่ม Export อยู่ด้านล่างเสมอ */}
         <button
           onClick={exportToExcel}
           disabled={!ocrResult || loading}

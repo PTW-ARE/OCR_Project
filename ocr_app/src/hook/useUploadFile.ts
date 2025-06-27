@@ -20,6 +20,12 @@ export default function useUploadFile() {
   const [fileName, setFileName] = useState("");
   const [ocrResult, setOcrResult] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [showRawText, setShowRawText] = useState(false);
+  const [rawTextResult, setRawTextResult] = useState("");
+
+  const toggleRawText = () => {
+    setShowRawText((prev) => !prev);
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -46,7 +52,7 @@ export default function useUploadFile() {
   }, [previewURL]);
 
   const uploadFile = async () => {
-    if (!previewURL) return("Add a File");
+    if (!previewURL) return "Add a File";
 
     const fileInput = document.querySelector(
       'input[type="file"]',
@@ -96,6 +102,12 @@ export default function useUploadFile() {
             );
           },
         );
+
+        const rawTextCombined = (data.page_results as OCRFieldResult[])
+          .map((p) => `หน้าที่ ${p.page}\n${p.rawtext}`)
+          .join("\n\n");
+
+        setRawTextResult(rawTextCombined);
 
         setLoading(false);
         setOcrResult(formatted.join("\n"));
@@ -175,6 +187,9 @@ export default function useUploadFile() {
     fileName,
     setFileName,
     ocrResult,
+    rawTextResult,
+    showRawText,
+    toggleRawText,
     setOcrResult,
     handleFileChange,
     uploadFile,
